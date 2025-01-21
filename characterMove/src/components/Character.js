@@ -7,6 +7,42 @@ export default class Character {
     this.character = null; // Referencia al modelo del personaje, se inicializará después de cargarlo
     this.mixer = null; // AnimationMixer para manejar las animaciones del personaje
     this.actions = {}; // Objeto donde se almacenan las animaciones disponibles, identificadas por nombre
+    this.keys = {}; // Estado de las teclas presionadas
+    this.speed = 5; // Velocidad de movimiento
+    this.rotationSpeed = 5 // Velocidad de rotacion
+
+    // Configurar eventos de teclado
+    this.setupKeyboardListeners();
+  }
+
+  setupKeyboardListeners() {
+    // Manejar teclas presionadas
+    window.addEventListener('keydown', (event) => {
+      this.keys[event.key] = true;
+
+      if (event.key == 'w') {
+        this.playAnimation('running') // Cambiar a la animacion de correr
+      } else if (event.key == 's') {
+        this.playAnimation('backward') // Aqui irá la animacion de ir hacia atras
+      } 
+    })
+
+    window.addEventListener('mousedown', (event) => {
+      this.keys[event.key] = true;
+      if (event.key == 'g') {
+        this.playAnimation('dance') // Aqui irá la animacion de ir hacia atras
+      }
+    })
+
+    // Manejar teclas soltadas
+    window.addEventListener('keyup', (event) => {
+      this.keys[event.key] = false;
+
+      // Si no hay teclas activas, vuelve a la animación Idle
+      if (!this.keys['w'] && !this.keys['s'] && !this.keys['a'] && !this.keys['d']) {
+        this.playAnimation('idle'); // Cambiar a animación de reposo
+      }
+    })
   }
 
   async loadCharacter(path) {
@@ -36,7 +72,8 @@ export default class Character {
   }
 
   playAnimation(name) {
-    if (this.actions[name]) {
+    if (this.actions[name]) {  
+      this.stopAllAnimations();
       this.actions[name].reset().play();
     } else {
       console.warn(`La animación "${name}" no está disponible.`);
@@ -47,9 +84,40 @@ export default class Character {
     Object.values(this.actions).forEach((action) => action.stop());
   }
 
+  handleMovement(delta) {
+    if (!this.character) return; // No hacer nada si el modelo no está cargado
+
+    const movementSpeed = this.speed * delta; // Calcular la velocidad de movimiento
+    const rotationSpeed = this.rotationSpeed * delta; // Calcular la velocidad de rotación
+
+    // Movimiento hacia adelante
+    if (this.keys['w']) {
+      this.character.translateZ(movementSpeed); // Mueve hacia adelante en el eje Z
+    }
+
+    // Movimiento hacia atrás
+    if (this.keys['s']) {
+      this.character.translateZ(-movementSpeed); // Mueve hacia atrás en el eje Z
+    }
+
+    // Rotación hacia la izquierda
+    if (this.keys['a']) {
+      this.character.rotation.y += rotationSpeed; // Gira a la izquierda
+    }
+
+    // Rotación hacia la derecha
+    if (this.keys['d']) {
+      this.character.rotation.y -= rotationSpeed; // Gira a la derecha
+    }
+  }
+
   update(delta) {
     if (this.mixer) {
       this.mixer.update(delta); // Actualizar las animaciones en cada frame
     }
+
+    // Manejar movimiento según las teclas presionadas
+    this.handleMovement(delta);
   }
+
 }

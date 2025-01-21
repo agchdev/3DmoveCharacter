@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import Character from './components/Character.js';
+import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 
 // ORDEN DE EJECUCIÓN
         // 1. Configurar la escena
@@ -30,11 +31,23 @@ document.body.appendChild(renderer.domElement); // Agregar el canvas al document
 
 
 // Añadir iluminación
+const pmremGenerator = new THREE.PMREMGenerator( renderer );
+const hdriLoader = new RGBELoader()
+hdriLoader.load( '/hdri/cielo.hdr', function ( texture ) {
+  const envMap = pmremGenerator.fromEquirectangular( texture ).texture;
+  texture.dispose(); // libera memoria
+  scene.environment = envMap // establece el mapa de entorno
+} );
 const ambientLight = new THREE.AmbientLight(0xffffff, .5); // Luz ambiente
 scene.add(ambientLight);
 
-const pointLight = new THREE.PointLight(0xffffff, 10); // Luz puntual
-pointLight.position.set(10, 10, 10); // Posicionar la luz puntual
+const pointLight2 = new THREE.PointLight(0xffffff, 10); // Luz ambiente
+pointLight2.position.set(10, 10, 10); // Posicionar la luz puntual
+scene.add(pointLight2);
+
+
+const pointLight = new THREE.PointLight(0xffffff, 30); // Luz puntual
+pointLight.position.set(0, 5, 0); // Posicionar la luz puntual
 scene.add(pointLight); // Agregar la luz puntual a la escena
 
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -45,12 +58,11 @@ controls.dampingFactor = 0.05;
 const loader = new GLTFLoader();
 const character = new Character(scene, loader);
 let scena; // Referencia al personaje
-let mixer; // mixer para las animaciones
 
 loader.load( '/models/scene.glb', function (gltf) {
     scena = gltf.scene;
-    scena.position.set(0, 0, 0);
-    // scena.scale.set(1, 1, 1); // Ajustar escala del modelo si es necesario
+    scena.position.set(0, -.80, 0);
+    scena.scale.set(1.5, 1.5, 1.5); // Ajustar escala del modelo si es necesario
     scene.add(scena);
 
   },
@@ -63,7 +75,7 @@ loader.load( '/models/scene.glb', function (gltf) {
 (async () => {
   // Cargar el personaje
   try {
-    await character.loadCharacter('/models/me.glb');
+    await character.loadCharacter('/models/me2.glb');
     console.log('Animaciones disponibles:', Object.keys(character.actions));
 
     // Reproducir una animación inicial
@@ -99,34 +111,6 @@ window.addEventListener('keyup', (event) => {
   }
 });
 
-// Movimiento continuo
-function moveCharacter(delta) {
-  if (!character.character) return; // Asegúrate de que el personaje esté cargado
-
-  const speed = 5 * delta; // Velocidad de movimiento (ajusta según lo necesites)
-  const rotationSpeed = 5 * delta; // Velocidad de rotación
-
-  // Mover hacia adelante
-  if (keys['w']) {
-    character.character.translateZ(speed); // Mueve hacia adelante en el eje Z
-  }
-
-  // Mover hacia atrás
-  if (keys['s']) {
-    character.character.translateZ(-speed); // Mueve hacia atrás en el eje Z
-  }
-
-  // Girar hacia la izquierda
-  if (keys['a']) {
-    character.character.rotation.y += rotationSpeed; // Gira a la izquierda
-  }
-
-  // Girar hacia la derecha
-  if (keys['d']) {
-    character.character.rotation.y -= rotationSpeed; // Gira a la derecha
-  }
-}
-
 // Manejar redimensionamiento de ventana
 window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -137,17 +121,14 @@ window.addEventListener('resize', () => {
 // Animación
 const clock = new THREE.Clock(); // Reloj esto sirve para controlar la velocidad de la animación
 function animate() {
-  const delta = clock.getDelta(); // Obtener el delta de tiempo
+  const delta = clock.getDelta();
 
-  // Actualizar movimiento del personaje
-  moveCharacter(delta);
-
-  // Actualizar animaciones del personaje
+  // Actualizar el personaje (animaciones y movimiento)
   character.update(delta);
 
   controls.update();
-	renderer.render( scene, camera ); // Renderiza la escena
-  requestAnimationFrame( animate ); // Siguiente frame
+  renderer.render(scene, camera);
+  requestAnimationFrame(animate);
 }
 
 animate();
