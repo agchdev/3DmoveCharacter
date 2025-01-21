@@ -1,9 +1,10 @@
 import * as THREE from 'three';
 
 export default class Character {
-  constructor(scene, loader) {
+  constructor(scene, loader, camera) {
     this.scene = scene; // Escena de Three.js donde se añadirá el modelo del personaje
     this.loader = loader; // GLTFLoader, usado para cargar modelos GLTF o GLB
+    this.camera = camera; // Cámara que seguirá al personaje
     this.character = null; // Referencia al modelo del personaje, se inicializará después de cargarlo
     this.mixer = null; // AnimationMixer para manejar las animaciones del personaje
     this.actions = {}; // Objeto donde se almacenan las animaciones disponibles, identificadas por nombre
@@ -111,6 +112,20 @@ export default class Character {
     }
   }
 
+  updateCamera() {
+    if (!this.character) return; 
+
+    // Configurar la posicion de la camara detrás de la camara
+    const offset = new THREE.Vector3(0, 5, 10); // Ajusta la altura y distancia de la cámara
+    const targetPosition = this.character.position.clone().add(offset);
+
+    // Actualizar posición de la cámara
+    this.camera.position.lerp(targetPosition, 0.1); // Movimiento suave de la cámara
+
+    // Hacer que la cámara mire hacia el personaje
+    this.camera.lookAt(this.character.position);
+  }
+
   update(delta) {
     if (this.mixer) {
       this.mixer.update(delta); // Actualizar las animaciones en cada frame
@@ -118,6 +133,7 @@ export default class Character {
 
     // Manejar movimiento según las teclas presionadas
     this.handleMovement(delta);
+    this.updateCamera(); // Actualizar la cámara en cada frame
   }
 
 }

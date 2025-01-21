@@ -23,7 +23,7 @@ const camera = new THREE.PerspectiveCamera(
   0.1, // Distancia mínima
   1000 // Distancia máxima
 );
-camera.position.set(3, 3, 3); // Ajusta según tu necesidad
+camera.position.set(1, 2, 1); // Ajusta según tu necesidad
 
 const renderer  = new THREE.WebGLRenderer({ antialias: true }); // Habilitar antialiasing
 renderer.setSize(window.innerWidth, window.innerHeight); // Tamaño de la ventana
@@ -56,7 +56,7 @@ controls.dampingFactor = 0.05;
 
 // Cargar modelos 3D
 const loader = new GLTFLoader();
-const character = new Character(scene, loader);
+const character = new Character(scene, loader, camera);
 let scena; // Referencia al personaje
 
 loader.load( '/models/scene.glb', function (gltf) {
