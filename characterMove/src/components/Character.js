@@ -1,7 +1,8 @@
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 export default class Character {
-  constructor(scene, loader, camera) {
+  constructor(scene, loader, camera, renderer) {
     this.scene = scene; // Escena de Three.js donde se añadirá el modelo del personaje
     this.loader = loader; // GLTFLoader, usado para cargar modelos GLTF o GLB
     this.camera = camera; // Cámara que seguirá al personaje
@@ -11,6 +12,25 @@ export default class Character {
     this.keys = {}; // Estado de las teclas presionadas
     this.speed = 5; // Velocidad de movimiento
     this.rotationSpeed = 5 // Velocidad de rotacion
+
+    // Flag para controlar si el usuario está interactuando con la cámara
+    this.isCameraInteracting = false;
+
+    // Configurar OrbitControls
+    this.controls = new OrbitControls(camera, renderer.domElement);
+    this.controls.enableDamping = true; // Suaviza el movimiento
+    this.controls.dampingFactor = 0.1;
+    this.controls.enablePan = false; // Desactiva el movimiento lateral
+    this.controls.minDistance = 2; // Distancia mínima de la cámara
+    this.controls.maxDistance = 10; // Distancia máxima de la cámara
+
+    // Detectar interacción con los controles
+    this.controls.addEventListener('start', () => {
+      this.isCameraInteracting = true;
+    });
+    this.controls.addEventListener('end', () => {
+      this.isCameraInteracting = false;
+    });
 
     // Configurar eventos de teclado
     this.setupKeyboardListeners();
@@ -113,17 +133,23 @@ export default class Character {
   }
 
   updateCamera() {
-    if (!this.character) return; 
+    if (!this.character) return;
 
-    // Configurar la posicion de la camara detrás de la camara
-    const offset = new THREE.Vector3(0, 5, 10); // Ajusta la altura y distancia de la cámara
-    const targetPosition = this.character.position.clone().add(offset);
+    if (!this.isCameraInteracting) {
+      // Configurar el offset de la cámara con respecto al personaje
+      const offset = new THREE.Vector3(0, 2, -5);
+      const worldOffset = offset.clone().applyQuaternion(this.character.quaternion);
+      const cameraPosition = this.character.position.clone().add(worldOffset);
 
-    // Actualizar posición de la cámara
-    this.camera.position.lerp(targetPosition, 0.1); // Movimiento suave de la cámara
+      // Suavizar el movimiento de la cámara hacia la nueva posición
+      this.camera.position.lerp(cameraPosition, 0.1);
 
-    // Hacer que la cámara mire hacia el personaje
-    this.camera.lookAt(this.character.position);
+      // Actualizar el target de OrbitControls al personaje
+      this.controls.target.copy(this.character.position);
+    }
+
+    // Actualizar los controles
+    this.controls.update();
   }
 
   update(delta) {

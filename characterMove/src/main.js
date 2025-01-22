@@ -23,7 +23,7 @@ const camera = new THREE.PerspectiveCamera(
   0.1, // Distancia mínima
   1000 // Distancia máxima
 );
-camera.position.set(1, 2, 1); // Ajusta según tu necesidad
+// camera.position.set(1, 2, 1); // Ajusta según tu necesidad
 
 const renderer  = new THREE.WebGLRenderer({ antialias: true }); // Habilitar antialiasing
 renderer.setSize(window.innerWidth, window.innerHeight); // Tamaño de la ventana
@@ -36,6 +36,9 @@ const hdriLoader = new RGBELoader()
 hdriLoader.load( '/hdri/cielo.hdr', function ( texture ) {
   const envMap = pmremGenerator.fromEquirectangular( texture ).texture;
   texture.dispose(); // libera memoria
+  // Establecer el HDRI como el fondo visible
+  scene.background = envMap;
+
   scene.environment = envMap // establece el mapa de entorno
 } );
 const ambientLight = new THREE.AmbientLight(0xffffff, .5); // Luz ambiente
@@ -50,13 +53,13 @@ const pointLight = new THREE.PointLight(0xffffff, 30); // Luz puntual
 pointLight.position.set(0, 5, 0); // Posicionar la luz puntual
 scene.add(pointLight); // Agregar la luz puntual a la escena
 
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true; // Suaviza el movimiento
-controls.dampingFactor = 0.05;
+// const controls = new OrbitControls(camera, renderer.domElement);
+// controls.enableDamping = true; // Suaviza el movimiento
+// controls.dampingFactor = 0.05;
 
 // Cargar modelos 3D
 const loader = new GLTFLoader();
-const character = new Character(scene, loader, camera);
+const character = new Character(scene, loader, camera, renderer);
 let scena; // Referencia al personaje
 
 loader.load( '/models/scene.glb', function (gltf) {
@@ -82,7 +85,7 @@ loader.load( '/models/scene.glb', function (gltf) {
     character.playAnimation('idle'); // Asegúrate de que esta animación exista
 
     // Apuntar la cámara al personaje
-    camera.lookAt(character.character.position);
+    // camera.lookAt(character.character.position);
   } catch (error) {
     console.error('Error al cargar el personaje:', error);
   }
@@ -126,7 +129,7 @@ function animate() {
   // Actualizar el personaje (animaciones y movimiento)
   character.update(delta);
 
-  controls.update();
+  // controls.update();
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
 }
