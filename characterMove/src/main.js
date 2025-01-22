@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import FiveLogo from './components/fiveLogo.js';
 import Character from './components/Character.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 
@@ -62,9 +62,11 @@ const loader = new GLTFLoader();
 const character = new Character(scene, loader, camera, renderer);
 let scena; // Referencia al personaje
 
-loader.load( '/models/scene.glb', function (gltf) {
+// Cargar el modelo 3D
+
+loader.load( '/models/scene2.glb', function (gltf) {
     scena = gltf.scene;
-    scena.position.set(0, -.80, 0);
+    scena.position.set(0, -.8, 0);
     scena.scale.set(1.5, 1.5, 1.5); // Ajustar escala del modelo si es necesario
     scene.add(scena);
 
@@ -74,6 +76,21 @@ loader.load( '/models/scene.glb', function (gltf) {
     console.error('Error al cargar el modelo:', error);
   }
 );
+// Cargar el modelo con FiveLogo
+const fiveLogo = new FiveLogo(scene);
+fiveLogo
+  .loadModel(
+    '/models/fiveLogo.glb', // Ruta del modelo
+    { x: 0, y: 0, z: 0 }, // Posición
+    { x: 2, y: 2, z: 2 }, // Escala
+    { x: 0, y: Math.PI / 4, z: 0 } // Rotación
+  )
+  .then((model) => {
+    console.log('Modelo cargado:', model);
+  })
+  .catch((error) => {
+    console.error('Error al cargar el modelo:', error);
+  });
 
 (async () => {
   // Cargar el personaje
@@ -128,6 +145,8 @@ function animate() {
 
   // Actualizar el personaje (animaciones y movimiento)
   character.update(delta);
+  // Actualizar el modelo y sus animaciones
+  fiveLogo.update(delta);
 
   // controls.update();
   renderer.render(scene, camera);
